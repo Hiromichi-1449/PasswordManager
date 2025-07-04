@@ -27,6 +27,11 @@ class MainActivity : AppCompatActivity() {
         val addButton       = findViewById<Button>(R.id.addButton)
         val accountContainer= findViewById<LinearLayout>(R.id.accountContainer)
 
+        findViewById<Button>(R.id.btnGeneratePassword).setOnClickListener {
+            val bottomSheet = PasswordGeneratorBottomSheet()
+            bottomSheet.show(supportFragmentManager, "PasswordGenerator")
+        }
+
         addButton.setOnClickListener {
             // Build and show the ADD sheet
             val addSheet = AddAccountBottomSheet { accountName, username, password ->

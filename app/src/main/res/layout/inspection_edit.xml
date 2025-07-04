@@ -19,16 +19,25 @@
         android:gravity="center"
         android:layout_marginBottom="16dp"/>
 
-    <EditText
-        android:id="@+id/accountNameEdit"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:hint="Account Name"
-        android:background="@drawable/bg_edit_text"
-        android:padding="12dp"
-        android:textColorHint="#888888"
-        android:textColor="#000000"
-        android:layout_marginBottom="12dp"/>
+        app:boxCornerRadiusTopStart="8dp"
+        app:boxCornerRadiusTopEnd="8dp"
+        app:boxCornerRadiusBottomStart="8dp"
+        app:boxCornerRadiusBottomEnd="8dp"
+        app:boxStrokeColor="#888888"
+        android:layout_marginBottom="12dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/accountNameEdit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textColorHint="#888888"/>
+    </com.google.android.material.textfield.TextInputLayout>
 
     <!-- Username / Email -->
     <com.google.android.material.textfield.TextInputLayout
