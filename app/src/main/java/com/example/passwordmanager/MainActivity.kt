@@ -1,5 +1,9 @@
 package com.example.passwordmanager
 
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+
 import AddAccountBottomSheet
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
@@ -78,6 +82,60 @@ class MainActivity : AppCompatActivity() {
 
                 accountContainer.addView(itemView)
             }
+
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "default_user"
+            Firebase.firestore.collection("users").document(userId).collection("accounts")
+                .get()
+                .addOnSuccessListener { result ->
+                    result.forEach { doc ->
+                        val accountName = doc.getString("accountName") ?: return@forEach
+                        val username = doc.getString("username") ?: ""
+                        val password = doc.getString("password") ?: ""
+                        val firestoreId = doc.id
+
+                        val itemView = layoutInflater.inflate(R.layout.account_item, accountContainer, false)
+                        val titleView = itemView.findViewById<TextView>(R.id.accountTitle)
+                        val passView  = itemView.findViewById<TextView>(R.id.accountPasswordMask)
+
+                        titleView.text = accountName
+                        passView.text = "**********"
+
+                        val info = AccountInfo(accountName, username, password)
+                        itemView.tag = Pair(info, firestoreId)
+
+                        itemView.setOnClickListener {
+                            val (tagInfo, docId) = itemView.tag as Pair<AccountInfo, String>
+                            val sheet = InspectionEditBottomSheet.newInstance(
+                                tagInfo.accountName,
+                                tagInfo.username,
+                                tagInfo.password
+                            ).apply {
+                                onDelete = {
+                                    accountContainer.removeView(itemView)
+                                    Firebase.firestore.collection("users").document(userId)
+                                        .collection("accounts").document(docId).delete()
+                                }
+                                onUpdate = { newName, newUser, newPass ->
+                                    titleView.text = newName
+                                    val updatedInfo = AccountInfo(newName, newUser, newPass)
+                                    itemView.tag = Pair(updatedInfo, docId)
+                                    Firebase.firestore.collection("users").document(userId)
+                                        .collection("accounts").document(docId)
+                                        .update(
+                                            mapOf(
+                                                "accountName" to newName,
+                                                "username" to newUser,
+                                                "password" to newPass
+                                            )
+                                        )
+                                }
+                            }
+                            sheet.show(supportFragmentManager, "InspectionEdit")
+                        }
+
+                        accountContainer.addView(itemView)
+                    }
+                }
         }
 
         addButton.setOnClickListener {
@@ -101,29 +159,51 @@ class MainActivity : AppCompatActivity() {
 
                 lifecycleScope.launch {
                     dao.insert(Account(accountName = accountName, username = username, password = password))
-                }
 
-                itemView.tag = info
+                    val firebaseAccount = hashMapOf(
+                        "accountName" to accountName,
+                        "username" to username,
+                        "password" to password
+                    )
+                    val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "default_user"
+                    Firebase.firestore.collection("users").document(userId).collection("accounts")
+                        .add(firebaseAccount)
+                        .addOnSuccessListener { docRef ->
+                            val firestoreId = docRef.id
+                            itemView.tag = Pair(info, firestoreId)
 
-                // 3) tapping the item opens the INSPECTION sheet
-                itemView.setOnClickListener {
-                    val sheet = InspectionEditBottomSheet.newInstance(
-                        info.accountName,
-                        info.username,
-                        info.password
-                    ).apply {
-                        // remove the view on delete
-                        onDelete = { accountContainer.removeView(itemView) }
-                        // update title & tag on save
-                        onUpdate = { newName, newUser, newPass ->
-                            titleView.text = newName
-                            itemView.tag = AccountInfo(newName, newUser, newPass)
+                            itemView.setOnClickListener {
+                                val sheet = InspectionEditBottomSheet.newInstance(
+                                    info.accountName,
+                                    info.username,
+                                    info.password
+                                ).apply {
+                                    onDelete = {
+                                        accountContainer.removeView(itemView)
+                                        Firebase.firestore.collection("users").document(userId)
+                                            .collection("accounts").document(firestoreId).delete()
+                                    }
+                                    onUpdate = { newName, newUser, newPass ->
+                                        titleView.text = newName
+                                        val updatedInfo = AccountInfo(newName, newUser, newPass)
+                                        itemView.tag = Pair(updatedInfo, firestoreId)
+                                        Firebase.firestore.collection("users").document(userId)
+                                            .collection("accounts").document(firestoreId)
+                                            .update(
+                                                mapOf(
+                                                    "accountName" to newName,
+                                                    "username" to newUser,
+                                                    "password" to newPass
+                                                )
+                                            )
+                                    }
+                                }
+                                sheet.show(supportFragmentManager, "InspectionEdit")
+                            }
+
+                            accountContainer.addView(itemView)
                         }
-                    }
-                    sheet.show(supportFragmentManager, "InspectionEdit")
                 }
-
-                accountContainer.addView(itemView)
             }
 
             addSheet.show(supportFragmentManager, "AddAccountBottomSheet")
