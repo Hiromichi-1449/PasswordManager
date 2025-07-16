@@ -46,96 +46,47 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val allAccounts = dao.getAll()
 
-            allAccounts.forEach { account ->
-                val itemView = layoutInflater.inflate(
-                    R.layout.account_item, accountContainer, false
-                )
-                val titleView = itemView.findViewById<TextView>(R.id.accountTitle)
-                val passView  = itemView.findViewById<TextView>(R.id.accountPasswordMask)
+            if (allAccounts.isNotEmpty()) {
+                allAccounts.forEach { account ->
+                    val itemView = layoutInflater.inflate(
+                        R.layout.account_item, accountContainer, false
+                    )
+                    val titleView = itemView.findViewById<TextView>(R.id.accountTitle)
+                    val passView  = itemView.findViewById<TextView>(R.id.accountPasswordMask)
 
-                titleView.text = account.accountName
-                passView.text = "**********"
+                    titleView.text = account.accountName
+                    passView.text = "**********"
 
-                val info = AccountInfo(account.accountName, account.username, account.password)
-                itemView.tag = Pair(info, account)
+                    val info = AccountInfo(account.accountName, account.username, account.password)
+                    itemView.tag = Pair(info, account)
 
-                itemView.setOnClickListener {
-                    val (info, storedAccount) = itemView.tag as Pair<AccountInfo, Account>
-                    val sheet = InspectionEditBottomSheet.newInstance(
-                        info.accountName,
-                        info.username,
-                        info.password
-                    ).apply {
-                        onDelete = {
-                            accountContainer.removeView(itemView)
-                            lifecycleScope.launch {
-                                dao.delete(storedAccount)
+                    itemView.setOnClickListener {
+                        val (info, storedAccount) = itemView.tag as Pair<AccountInfo, Account>
+                        val sheet = InspectionEditBottomSheet.newInstance(
+                            info.accountName,
+                            info.username,
+                            info.password
+                        ).apply {
+                            onDelete = {
+                                accountContainer.removeView(itemView)
+                                lifecycleScope.launch {
+                                    dao.delete(storedAccount)
+                                }
+                            }
+                            onUpdate = { newName, newUser, newPass ->
+                                titleView.text = newName
+                                itemView.tag = Pair(AccountInfo(newName, newUser, newPass), storedAccount)
                             }
                         }
-                        onUpdate = { newName, newUser, newPass ->
-                            titleView.text = newName
-                            itemView.tag = Pair(AccountInfo(newName, newUser, newPass), storedAccount)
-                        }
+                        sheet.show(supportFragmentManager, "InspectionEdit")
                     }
-                    sheet.show(supportFragmentManager, "InspectionEdit")
-                }
 
-                accountContainer.addView(itemView)
+                    accountContainer.addView(itemView)
+                }
+            } else {
+                // Do nothing — Room is empty and we will not fetch from Firestore on launch
             }
 
-            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: "default_user"
-            Firebase.firestore.collection("users").document(userId).collection("accounts")
-                .get()
-                .addOnSuccessListener { result ->
-                    result.forEach { doc ->
-                        val accountName = doc.getString("accountName") ?: return@forEach
-                        val username = doc.getString("username") ?: ""
-                        val password = doc.getString("password") ?: ""
-                        val firestoreId = doc.id
-
-                        val itemView = layoutInflater.inflate(R.layout.account_item, accountContainer, false)
-                        val titleView = itemView.findViewById<TextView>(R.id.accountTitle)
-                        val passView  = itemView.findViewById<TextView>(R.id.accountPasswordMask)
-
-                        titleView.text = accountName
-                        passView.text = "**********"
-
-                        val info = AccountInfo(accountName, username, password)
-                        itemView.tag = Pair(info, firestoreId)
-
-                        itemView.setOnClickListener {
-                            val (tagInfo, docId) = itemView.tag as Pair<AccountInfo, String>
-                            val sheet = InspectionEditBottomSheet.newInstance(
-                                tagInfo.accountName,
-                                tagInfo.username,
-                                tagInfo.password
-                            ).apply {
-                                onDelete = {
-                                    accountContainer.removeView(itemView)
-                                    Firebase.firestore.collection("users").document(userId)
-                                        .collection("accounts").document(docId).delete()
-                                }
-                                onUpdate = { newName, newUser, newPass ->
-                                    titleView.text = newName
-                                    val updatedInfo = AccountInfo(newName, newUser, newPass)
-                                    itemView.tag = Pair(updatedInfo, docId)
-                                    Firebase.firestore.collection("users").document(userId)
-                                        .collection("accounts").document(docId)
-                                        .update(
-                                            mapOf(
-                                                "accountName" to newName,
-                                                "username" to newUser,
-                                                "password" to newPass
-                                            )
-                                        )
-                                }
-                            }
-                            sheet.show(supportFragmentManager, "InspectionEdit")
-                        }
-
-                        accountContainer.addView(itemView)
-                    }
-                }
         }
 
         addButton.setOnClickListener {
