@@ -28,11 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.passwordmanager.data.NaviBarItem
 import com.example.passwordmanager.R
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(modifier: Modifier = Modifier, navController: NavController) {
 
     val natItemList = listOf(
         NaviBarItem("Home", Icons.Default.Home),
@@ -59,12 +60,12 @@ fun MainScreen(modifier: Modifier = Modifier) {
         }
 
     ) { innerPadding ->
-        ContentScreen(modifier = Modifier.padding(innerPadding))
+        ContentScreen(modifier = Modifier.padding(innerPadding), navController = navController)
     }
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier) {
+fun ContentScreen(modifier: Modifier = Modifier, navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -73,7 +74,7 @@ fun ContentScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ElevatedButton(
-            onClick = {/*Handle clicks action*/},
+            onClick = {navController.navigate(Routes.importS)},
             colors = ButtonDefaults.elevatedButtonColors(
                 containerColor = Color(0xFF89B0AE),
                 contentColor = Color.White
