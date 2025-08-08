@@ -1,5 +1,6 @@
 package com.example.passwordmanager.ui.pages
 
+import androidx.collection.mutableIntSetOf
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -32,6 +37,7 @@ import androidx.navigation.NavController
 import com.example.passwordmanager.data.NaviBarItem
 import com.example.passwordmanager.R
 
+
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, navController: NavController) {
 
@@ -40,14 +46,20 @@ fun MainScreen(modifier: Modifier = Modifier, navController: NavController) {
         NaviBarItem("Add", Icons.Default.Add),
         NaviBarItem("Account", Icons.Default.AccountCircle)
     )
+    //
+    var selectedIndex by remember {
+        mutableStateOf(0)
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             NavigationBar {
                 natItemList.forEachIndexed { index, navBarItem ->
                    NavigationBarItem(
-                       selected = true,
-                       onClick = {},
+                       selected = selectedIndex == index,
+                       onClick = {
+                           selectedIndex = index
+                       },
                        icon = {
                            Icon(imageVector = navBarItem.icon, contentDescription = "Icon")
                        },

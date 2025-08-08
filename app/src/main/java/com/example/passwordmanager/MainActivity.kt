@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                         MainScreen(navController = navController)
                     }
                     composable(Routes.importS) {
-                        ImportScreen()
+                        ImportScreen(navController = navController)
                     }
                 }  )
             }
